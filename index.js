@@ -1,17 +1,29 @@
- const express = require('express');
-const cors = require('cors');
+// Load environment variables
 require('dotenv').config();
 
+// Import dependencies
+const express = require('express');
+const cors = require('cors');
+
+// Initialize Express app
 const app = express();
-app.use(cors());
-app.use(express.json());
 
+// Middleware
+app.use(cors()); // Enable CORS for all origins
+app.use(express.json()); // Parse incoming JSON requests
+
+// Routes
 const taskRoutes = require('./routes/tasks');
-app.use('/api/tasks', taskRoutes);
+app.use('/api/tasks', taskRoutes); // Mount task routes
 
+// Root route
 app.get('/', (req, res) => {
-  res.send('Task Tracker API is running');
+  res.send('🚀 Task Tracker API is running on Railway');
 });
 
+// Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
+
