@@ -4,7 +4,7 @@ require('dotenv').config();
 // Import dependencies
 const express = require('express');
 const cors = require('cors');
-
+const tasksRouter = require('./routes/tasks');
 // Initialize Express app
 const app = express();
 
