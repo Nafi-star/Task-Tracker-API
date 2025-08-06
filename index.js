@@ -4,7 +4,11 @@ require('dotenv').config();
 // Import dependencies
 const express = require('express');
 const cors = require('cors');
+
+// Import route handlers
 const tasksRouter = require('./routes/tasks');
+const authRoutes = require('./routes/authRoutes'); // ✅ Add this line
+
 // Initialize Express app
 const app = express();
 
@@ -13,8 +17,8 @@ app.use(cors()); // Enable CORS for all origins
 app.use(express.json()); // Parse incoming JSON requests
 
 // Routes
-const taskRoutes = require('./routes/tasks');
-app.use('/api/tasks', taskRoutes); // Mount task routes
+app.use('/api/tasks', tasksRouter);     // ✅ Task routes
+app.use('/api/auth', authRoutes);       // ✅ Auth routes (register/login)
 
 // Root route
 app.get('/', (req, res) => {

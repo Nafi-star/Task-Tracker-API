@@ -1,83 +1,60 @@
+// controllers/authController.js
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const db = require('../db');
 
-exports.getAllTasks = async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM tasks');
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+const register = async (req, res) => {
+  let { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
   }
-};
 
-exports.getTaskById = async (req, res) => {
+  username = username.trim().toLowerCase();
+
   try {
-    const [rows] = await db.query('SELECT * FROM tasks WHERE id = ?', [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ error: 'Task not found' });
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.createTask = async (req, res) => {
-  try {
-    const { title, description, completed } = req.body;
-
-    if (!title || typeof title !== 'string') {
-      return res.status(400).json({ error: 'Title is required and must be a string' });
-    }
-
-    if (!description || typeof description !== 'string') {
-      return res.status(400).json({ error: 'Description is required and must be a string' });
-    }
-
-    const [result] = await db.query(
-      'INSERT INTO tasks (title, description, completed) VALUES (?, ?, ?)',
-      [title, description, completed ?? false]
-    );
-
-    const [newTask] = await db.query('SELECT * FROM tasks WHERE id = ?', [result.insertId]);
-    res.status(201).json(newTask[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.updateTask = async (req, res) => {
-  try {
-    const { title, description, completed } = req.body;
-
-    if (!title || typeof title !== 'string') {
-      return res.status(400).json({ error: 'Title is required and must be a string' });
-    }
-
-    if (!description || typeof description !== 'string') {
-      return res.status(400).json({ error: 'Description is required and must be a string' });
-    }
-
-    const [rows] = await db.query('SELECT * FROM tasks WHERE id = ?', [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ error: 'Task not found' });
-
+    const hashedPassword = await bcrypt.hash(password, 10);
     await db.query(
-      'UPDATE tasks SET title = ?, description = ?, completed = ? WHERE id = ?',
-      [title, description, completed ?? false, req.params.id]
+      'INSERT INTO users (username, password) VALUES (?, ?)',
+      [username, hashedPassword]
+    );
+    res.status(201).json({ message: '✅ User registered successfully' });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      res.status(409).json({ error: '❌ Username already exists' });
+    } else {
+      res.status(500).json({ error: '❌ Registration failed', details: err.message });
+    }
+  }
+};
+
+const login = async (req, res) => {
+  let { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  username = username.trim().toLowerCase();
+
+  try {
+    const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
+    const user = rows[0];
+    if (!user) return res.status(401).json({ error: '❌ Invalid credentials' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ error: '❌ Invalid credentials' });
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
     );
 
-    const [updatedTask] = await db.query('SELECT * FROM tasks WHERE id = ?', [req.params.id]);
-    res.json(updatedTask[0]);
+    res.json({ message: '✅ Login successful', token });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: '❌ Login failed', details: err.message });
   }
 };
 
-exports.deleteTask = async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM tasks WHERE id = ?', [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ error: 'Task not found' });
-
-    await db.query('DELETE FROM tasks WHERE id = ?', [req.params.id]);
-    res.status(204).send();
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+module.exports = { register, login };

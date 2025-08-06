@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const authMiddleware = require('../middleware/authMiddleware'); // ✅ Import middleware
+
 const {
   getAllTasks,
   getTaskById,
@@ -8,10 +10,11 @@ const {
   deleteTask,
 } = require('../controllers/tasksController');
 
-router.get('/', getAllTasks);
-router.get('/:id', getTaskById);
-router.post('/', createTask);
-router.put('/:id', updateTask);
-router.delete('/:id', deleteTask);
+// ✅ Protect all task routes
+router.get('/', authMiddleware, getAllTasks);
+router.get('/:id', authMiddleware, getTaskById);
+router.post('/', authMiddleware, createTask);
+router.put('/:id', authMiddleware, updateTask);
+router.delete('/:id', authMiddleware, deleteTask);
 
 module.exports = router;
