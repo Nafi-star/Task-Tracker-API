@@ -1,4 +1,3 @@
-// controllers/authController.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -39,8 +38,8 @@ exports.login = async (req, res) => {
     return res.status(400).json({ message: 'Invalid credentials' });
   }
 
-  // Create token
-  const token = jwt.sign({ username: user.username }, 'your_jwt_secret', {
+  // Create token using environment variable
+  const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, {
     expiresIn: '1h',
   });
 
