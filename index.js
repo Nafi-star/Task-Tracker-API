@@ -12,8 +12,13 @@ const authRoutes = require('./routes/authRoutes'); // ✅ Add this line
 // Initialize Express app
 const app = express();
 
+// ✅ CORS Configuration
+app.use(cors({
+  origin: 'http://localhost:5173', // ✅ Allow your frontend dev server
+  credentials: true,               // ✅ Allow cookies/auth headers
+}));
+
 // Middleware
-app.use(cors()); // Enable CORS for all origins
 app.use(express.json()); // Parse incoming JSON requests
 
 // Routes
